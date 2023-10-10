@@ -1,16 +1,67 @@
-# This is a sample Python script.
+# File: main.py
+#
+# Project name: Projekt 1 - Analiza danych i tworzenie wykresów
+# Project link: https://github.com/ssynowiec/python-adv-p1
+# Date created: 11.10.2023
+# Authors:
+#   -> Krystian Ozga
+#   -> Stanisław Synowiec
+#
+# License: UNLICENSED
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+import pandas as pd
+import matplotlib.pyplot as plt
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
+class TravelAnalysis:
+    def __init__(self, data_file):
+        self.data = pd.read_csv('data/' + data_file, sep='\t')
+
+    def plot_city_counts(self):
+        city_counts = self.data['Miasto'].value_counts()
+
+        plt.figure(figsize=(15, 5))
+        city_counts.plot(kind='bar')
+        plt.xlabel('Miasto')
+        plt.ylabel('Liczba wyjazdów')
+        plt.title('Ilość wyjazdów z każdego miasta')
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.show()
+
+    def plot_monthly_costs(self):
+        self.data['Koszt_wyj'] = self.data['Koszt_wyj'].str.replace(',', '.', regex=True).astype(float)
+        self.data['D_wyj'] = pd.to_datetime(self.data['D_wyj'])
+        self.data['Miesiac'] = self.data['D_wyj'].dt.strftime('%Y-%m')
+
+        total_month = self.data.groupby('Miesiac')['Koszt_wyj'].sum()
+        plt.figure(figsize=(10, 5))
+        total_month.plot(kind='bar', color='skyblue')
+        plt.xlabel('Miesiąc')
+        plt.ylabel('Suma kosztów')
+        plt.title('Suma kosztów wyjazdów w poszczególnych miesiącach')
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.show()
+
+    def plot_duration_by_city(self):
+        self.data['D_wyj'] = pd.to_datetime(self.data['D_wyj'])
+        self.data['D_powr'] = pd.to_datetime(self.data['D_powr'])
+        self.data['Czas_trwania'] = (self.data['D_powr'] - self.data['D_wyj']).dt.days
+
+        plt.figure(figsize=(10, 5))
+        plt.bar(self.data['Miasto'], self.data['Czas_trwania'])
+        plt.xlabel('Miasto')
+        plt.ylabel('Czas trwania wyjazdu (dni)')
+        plt.title('Czas trwania wyjazdu w poszczególnych miastach')
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.show()
 
 
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
+    analysis = TravelAnalysis('podroze.txt')
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    analysis.plot_city_counts()
+    analysis.plot_monthly_costs()
+    analysis.plot_duration_by_city()
