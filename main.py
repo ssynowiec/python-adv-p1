@@ -58,10 +58,39 @@ class TravelAnalysis:
         plt.tight_layout()
         plt.show()
 
+    def plot_price_by_sex(self):
+        # Zamiana na słupkowy grupowy
+        # https://jug.dpieczynski.pl/lab-ead/Lab%2003%20-%20Wykresy.html
+
+        self.data['man'] = 0
+        self.data['wom'] = 0
+        names = self.data['Imie'].tolist()
+        prices = self.data['Koszt_wyj'].str.replace(',', '.', regex=True).astype(float)
+
+        for i in range(len(names)):
+            if names[i][len(names[i])-1] == 'a':
+                self.data['wom'] += prices[i]
+            else:
+                self.data['man'] += prices[i]
+
+        total = round(self.data['Koszt_wyj'].str.replace(',', '.', regex=True).astype(float).sum(), 2)
+
+        labels = [f'Man ({round(self.data["man"][2], 2)})zł', f'Woman ({round(self.data["wom"][2], 2)})zł']
+        men_price = (self.data['man'][2]/total) * 100
+        women_price = (self.data['wom'][2].sum()/total) * 100
+        sizes = [men_price, women_price]
+
+        plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=140)
+        plt.axis('equal')
+        plt.legend(loc='best', labels=labels)
+        plt.title(f'Procentowy udział płci w kosztach wyjazdów\nŁączny koszt wyjazdów {round(total, 2)}zł')
+        plt.show()
+
 
 if __name__ == '__main__':
     analysis = TravelAnalysis('podroze.txt')
 
-    analysis.plot_city_counts()
-    analysis.plot_monthly_costs()
-    analysis.plot_duration_by_city()
+    analysis.plot_price_by_sex()
+    # analysis.plot_city_counts()
+    # analysis.plot_monthly_costs()
+    # analysis.plot_duration_by_city()
