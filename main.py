@@ -1,7 +1,6 @@
 # File: main.py
 #
 # Project name: Projekt 1 - Analiza danych i tworzenie wykresów
-# Project link: https://github.com/ssynowiec/python-adv-p1
 # Date created: 11.10.2023
 # Authors:
 #   -> Krystian Ozga
@@ -11,132 +10,121 @@
 
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+
+from matplotlib import gridspec
 
 
 class TravelAnalysis:
     def __init__(self, data_file):
         self.data = pd.read_csv('data/' + data_file, sep='\t')
-
-    def plot_city_counts(self):
-        city_counts = self.data['Miasto'].value_counts()
-
-        plt.figure(figsize=(15, 5))
-        city_counts.plot(kind='bar')
-        plt.xlabel('Miasto')
-        plt.ylabel('Liczba wyjazdów')
-        plt.title('Ilość wyjazdów z każdego miasta')
-        plt.xticks(rotation=45)
-        plt.tight_layout()
-        plt.show()
-
-    def plot_monthly_costs(self):
         self.data['Koszt_wyj'] = self.data['Koszt_wyj'].str.replace(',', '.', regex=True).astype(float)
-        self.data['D_wyj'] = pd.to_datetime(self.data['D_wyj'])
-        self.data['Miesiac'] = self.data['D_wyj'].dt.strftime('%Y-%m')
 
-        total_month = self.data.groupby('Miesiac')['Koszt_wyj'].sum()
-        plt.figure(figsize=(10, 5))
-        total_month.plot(kind='bar', color='skyblue')
-        plt.xlabel('Miesiąc')
-        plt.ylabel('Suma kosztów')
-        plt.title('Suma kosztów wyjazdów w poszczególnych miesiącach')
+    def plot_city_travel_counts(self):
+        city_counts_men = self.data[self.data['Imie'].str[-1] != 'a']['Miasto'].value_counts()
+        city_counts_women = self.data[self.data['Imie'].str[-1] == 'a']['Miasto'].value_counts()
+
+        city_counts_men = city_counts_men.sort_values(ascending=True)
+        city_counts_women = city_counts_women.sort_values(ascending=True)
+
+        plt.figure(figsize=(13, 8))
+        plt.subplot(2, 1, 1)
+        city_counts_men.plot(kind='bar', color='lightblue')
+        plt.title('Liczba mężczyzn podróżujących do miasta')
+        plt.xlabel('Miasto')
+        plt.ylabel('Liczba mężczyzn')
         plt.xticks(rotation=45)
+
+        plt.subplot(2, 1, 2)
+        city_counts_women.plot(kind='bar', color='pink')
+        plt.title('Liczba kobiet podróżujących do miasta')
+        plt.xlabel('Miasto')
+        plt.ylabel('Liczba kobiet')
+        plt.xticks(rotation=45)
+
         plt.tight_layout()
         plt.show()
 
-    def plot_duration_by_city(self):
+    def plot_city_entries_by_month(self):
         self.data['D_wyj'] = pd.to_datetime(self.data['D_wyj'])
         self.data['D_powr'] = pd.to_datetime(self.data['D_powr'])
-        self.data['Czas_trwania'] = (self.data['D_powr'] - self.data['D_wyj']).dt.days
+        self.data['Miesiąc'] = self.data['D_wyj'].dt.month
+        grouped = self.data.groupby(['Miasto', 'Miesiąc'])
 
-        plt.figure(figsize=(10, 5))
-        plt.bar(self.data['Miasto'], self.data['Czas_trwania'])
-        plt.xlabel('Miasto')
-        plt.ylabel('Czas trwania wyjazdu (dni)')
-        plt.title('Czas trwania wyjazdu w poszczególnych miastach')
+        cities = []
+        months = []
+        entries = []
+
+        for (city, month), group in grouped:
+            cities.append(city)
+            months.append(month)
+            entries.append(len(group))
+
+        avg_costs = self.data.groupby('Miasto')['Koszt_wyj'].mean()
+
+        fig, ax1 = plt.subplots(figsize=(12, 8))
+
+        ax1.bar(cities, entries, color='lightgreen', alpha=0.5, label='Ilość wjeżdżających')
+        ax1.set_xlabel('Miasto')
+        ax1.set_ylabel('Ilość wjeżdżających')
+        ax1.set_title('Stosunek Ilości Wjeżdżających do Miasta a Miesiącem')
+
+        ax2 = ax1.twinx()
+        ax2.plot(avg_costs.index, avg_costs.values, color='r', marker='o', label='Średni koszt (PLN)')
+        ax2.set_ylabel('Średni koszt (PLN)')
+
         plt.xticks(rotation=45)
-        plt.tight_layout()
+        plt.grid(True)
+        fig.tight_layout()
+
+        ax1.legend(loc='upper left')
+        ax2.legend(loc='upper right')
+
         plt.show()
 
-    # def plot_price_by_sex(self):
-    #     # Zamiana na słupkowy grupowy
-    #     # https://jug.dpieczynski.pl/lab-ead/Lab%2003%20-%20Wykresy.html
-    #
-    #     self.data['man'] = 0
-    #     self.data['wom'] = 0
-    #     names = self.data['Imie'].tolist()
-    #     prices = self.data['Koszt_wyj'].str.replace(',', '.', regex=True).astype(float)
-    #
-    #     for i in range(len(names)):
-    #         if names[i][len(names[i]) - 1] == 'a':
-    #             self.data['wom'] += prices[i]
-    #         else:
-    #             self.data['man'] += prices[i]
-    #
-    #     total = round(self.data['Koszt_wyj'].str.replace(',', '.', regex=True).astype(float).sum(), 2)
-    #
-    #     labels = [f'Man ({round(self.data["man"][2], 2)})zł', f'Woman ({round(self.data["wom"][2], 2)})zł']
-    #     men_price = (self.data['man'][2] / total) * 100
-    #     women_price = (self.data['wom'][2].sum() / total) * 100
-    #     sizes = [men_price, women_price]
-    #
-    #     plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=140)
-    #     plt.axis('equal')
-    #     plt.legend(loc='best', labels=labels)
-    #     plt.title(f'Procentowy udział płci w kosztach wyjazdów\nŁączny koszt wyjazdów {round(total, 2)}zł')
-    #     plt.show()
+    def analyze_top_travelers(self):
+        self.data['D_wyj'] = pd.to_datetime(self.data['D_wyj'])
+        self.data['D_powr'] = pd.to_datetime(self.data['D_powr'])
 
-    def plot_cities_by_sex(self):
-        grupowane = self.data.groupby('Miasto')
-        tmp: dict = dict()
+        grouped_data = self.data.groupby(['Imie', 'Nazwisko'])
+        summary_data = grouped_data.agg({'Miasto': 'count', 'Koszt_wyj': 'sum', 'D_powr': 'max', 'D_wyj': 'min'})
+        summary_data['Długość_podróży'] = (summary_data['D_powr'] - summary_data['D_wyj']).dt.days
+        top_10_travelers = summary_data.sort_values(by='Miasto', ascending=False).head(10)
 
-        for miejsce, dane_miejsce in grupowane:
-            man = 0
-            woman = 0
-            for imie in dane_miejsce['Imie']:
-                if imie[-1] == 'a':
-                    woman += 1
-                else:
-                    man += 1
+        fig, ax1 = plt.subplots(figsize=(20, 8))
+        ax2 = ax1.twinx()
 
-            tmp[miejsce] = {
-                'woman': woman,
-                'man': man
-            }
+        ax1.bar(top_10_travelers.index.map(lambda x: f'{x[0]} {x[1]}'), top_10_travelers['Miasto'], color='orange',
+                alpha=0.5, label='Ilość podróży')
+        ax2.plot(top_10_travelers.index.map(lambda x: f'{x[0]} {x[1]}'), top_10_travelers['Koszt_wyj'],
+                 color='darkblue', marker='o', label='Suma kosztów za podróże')
 
-        miejsca = list(tmp.keys())
-        liczba_mezczyzn = [tmp[miasto]['man'] for miasto in miejsca]
-        liczba_kobiet = [tmp[miasto]['woman'] for miasto in miejsca]
-        fig, ax = plt.subplots(figsize=(12, 8))
+        ax1.set_xlabel('Podróżnicy')
+        ax1.set_ylabel('Ilość podróży')
+        ax2.set_ylabel('Suma kosztów')
 
-        width = 0.35
-        indeks = np.arange(len(miejsca))
+        plt.title('Analiza 10 najczęściej podróżujących osób')
+        plt.xticks(rotation=45)
 
-        ax.bar(indeks - width/2, liczba_mezczyzn, width, label='Mężczyźni')
-        ax.bar(indeks + width/2, liczba_kobiet, width, label='Kobiety')
+        # Dodanie legendy
+        ax1.legend(loc='upper left')
+        ax2.legend(loc='upper right')
 
-        ax.set_xticks(indeks)
-        ax.set_xticklabels(miejsca, rotation=45)
-        ax.legend()
-        ax.set_title('Liczba osób (Mężczyzn i Kobiet) przyjeżdżających do miast')
-        ax.set_ylabel('Liczba osób')
-        plt.show()
+        plt.figure(figsize=(7, 6))
+        city_counts = self.data['Miasto'].value_counts()
+        top_city = city_counts.idxmax()
+        explode = [0.1 if city == top_city else 0 for city in city_counts.index]
 
-    def plot(self):
-        df = self.data
-        df['Koszt_wyj'] = self.data['Koszt_wyj'].str.replace(',', '.', regex=True).astype(float)
+        plt.pie(city_counts, labels=None, autopct='%1.1f%%', startangle=140, explode=explode, pctdistance=0.85)
 
-        df['D_wyj'] = pd.to_datetime(df['D_wyj'])
-        df['D_powr'] = pd.to_datetime(df['D_powr'])
+        center_circle = plt.Circle((0, 0), 0.40, fc='white')
+        fig = plt.gcf()
+        fig.gca().add_artist(center_circle)
 
-        df['Czas_trwania'] = (df['D_powr'] - df['D_wyj']).dt.days + 1
-
-        heatmap_data = df.pivot_table(index='Miasto', columns='Czas trwania', values='Koszt_wyj', aggfunc='mean')
-
-        plt.figure(figsize=(12, 8))
-        sns.heatmap(heatmap_data, cmap='YlGnBu', annot=True, fmt=".2f")
-
-        plt.title('Mapa kolorów - Związek między miejscem, czasem trwania a średnim kosztem wyjazdu')
+        plt.axis('equal')
+        plt.legend(city_counts.index, title='Miasta', bbox_to_anchor=(0.85, 0.5))
+        plt.title(f'Najczęściej wybierane miasto: {top_city}')
 
         plt.tight_layout()
         plt.show()
@@ -145,7 +133,6 @@ class TravelAnalysis:
 if __name__ == '__main__':
     analysis = TravelAnalysis('podroze.txt')
 
-    analysis.plot_price_by_sex()
-    # analysis.plot_city_counts()
-    # analysis.plot_monthly_costs()
-    # analysis.plot_duration_by_city()
+    analysis.analyze_top_travelers()
+    analysis.plot_city_travel_counts()
+    analysis.plot_city_entries_by_month()
