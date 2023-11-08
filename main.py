@@ -65,10 +65,10 @@ class TravelAnalysis:
 
         fig, ax1 = plt.subplots(figsize=(12, 8))
 
-        ax1.bar(cities, entries, color='lightgreen', alpha=0.5, label='Ilość wjeżdżających')
+        ax1.bar(cities, entries, color='lightgreen', alpha=0.5, label='Liczba wjeżdżających')
         ax1.set_xlabel('Miasto')
-        ax1.set_ylabel('Ilość wjeżdżających')
-        ax1.set_title('Stosunek Ilości Wjeżdżających do Miasta a Miesiącem')
+        ax1.set_ylabel('Liczba wjeżdżających')
+        ax1.set_title('Stosunek ilości wjeżdżających do miasta a średni koszt')
 
         ax2 = ax1.twinx()
         ax2.plot(avg_costs.index, avg_costs.values, color='r', marker='o', label='Średni koszt (PLN)')
@@ -96,12 +96,12 @@ class TravelAnalysis:
         ax2 = ax1.twinx()
 
         ax1.bar(top_10_travelers.index.map(lambda x: f'{x[0]} {x[1]}'), top_10_travelers['Miasto'], color='orange',
-                alpha=0.5, label='Ilość podróży')
+                alpha=0.5, label='Liczba podróży')
         ax2.plot(top_10_travelers.index.map(lambda x: f'{x[0]} {x[1]}'), top_10_travelers['Koszt_wyj'],
                  color='darkblue', marker='o', label='Suma kosztów za podróże')
 
         ax1.set_xlabel('Podróżnicy')
-        ax1.set_ylabel('Ilość podróży')
+        ax1.set_ylabel('Liczba podróży')
         ax2.set_ylabel('Suma kosztów')
 
         plt.title('Analiza 10 najczęściej podróżujących osób')
